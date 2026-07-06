@@ -115,6 +115,7 @@ def parse_scoreboard(payload: dict[str, Any]) -> list[Game]:
             raise SchemaDriftError(f"{context}: expected exactly one home and one away side")
 
         status = _parse_status(event["status"]["type"], context=context)
+        raw_season_type = event.get("season", {}).get("type")
         games.append(
             Game(
                 game_id=game_id,
@@ -125,6 +126,7 @@ def parse_scoreboard(payload: dict[str, Any]) -> list[Game]:
                 # a scheduled game legitimately has no score yet
                 home_score=0 if status is GameStatus.SCHEDULED else sides["home"][1],
                 away_score=0 if status is GameStatus.SCHEDULED else sides["away"][1],
+                season_type=int(raw_season_type) if raw_season_type is not None else None,
             )
         )
     return games
@@ -154,6 +156,7 @@ def parse_summary_snapshots(payload: dict[str, Any], *, game_id: str) -> list[Li
             away_score = int(play["awayScore"])
         except (KeyError, TypeError, ValueError) as exc:
             raise SchemaDriftError(f"summary for {game_id}: bad play {play.get('id')}") from exc
+        play_id = play.get("id")
         snapshots.append(
             LiveGameState(
                 game_id=game_id,
@@ -162,6 +165,7 @@ def parse_summary_snapshots(payload: dict[str, Any], *, game_id: str) -> list[Li
                 seconds_remaining_in_period=parse_clock(clock_display),
                 home_score=home_score,
                 away_score=away_score,
+                source_play_id=str(play_id) if play_id is not None else None,
             )
         )
     if dropped:

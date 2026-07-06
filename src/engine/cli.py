@@ -5,11 +5,20 @@ phase isn't built yet exit with code 2 and say so, rather than pretending.
 from __future__ import annotations
 
 import logging
+from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
 
 import typer
 
 from engine.config import load_settings
 from engine.logging import configure_logging
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
+    from engine.data.store import Store
+    from engine.ingestion.espn import EspnClient
+    from engine.ingestion.kalshi import KalshiPublicClient
 
 app = typer.Typer(
     name="engine",
@@ -31,10 +40,187 @@ def _main(verbose: bool = typer.Option(False, "--verbose", "-v"), json_logs: boo
     configure_logging(json_output=json_logs, level=logging.DEBUG if verbose else logging.INFO)
 
 
-@app.command()
-def ingest() -> None:
-    """Backfill historical games and market data."""
-    _not_built("Phase 1-2 (ingestion + storage)")
+ingest_app = typer.Typer(
+    name="ingest",
+    help="Backfill and verify the historical dataset.",
+    no_args_is_help=True,
+)
+app.add_typer(ingest_app)
+
+
+def _store() -> Store:
+    from pathlib import Path
+
+    from engine.data.store import Store
+
+    settings = load_settings()
+    if settings.database_url.startswith("sqlite:///"):
+        Path(settings.database_url.removeprefix("sqlite:///")).parent.mkdir(
+            parents=True, exist_ok=True
+        )
+    store = Store(settings.database_url)
+    store.init_schema()
+    return store
+
+
+@asynccontextmanager
+async def _clients() -> AsyncIterator[tuple[Store, EspnClient, KalshiPublicClient]]:
+    from pathlib import Path
+
+    import httpx
+
+    from engine.ingestion.espn import EspnClient
+    from engine.ingestion.http import FileCache, RetryingClient
+    from engine.ingestion.kalshi import KalshiPublicClient
+
+    settings = load_settings()
+    store = _store()
+    async with httpx.AsyncClient(timeout=30) as client:
+        http = RetryingClient(client, cache=FileCache(Path("data/http_cache")))
+        yield (
+            store,
+            EspnClient(http, settings.espn_api_base),
+            KalshiPublicClient(http, settings.kalshi_api_base),
+        )
+
+
+@ingest_app.command("games")
+def ingest_games(
+    start: str = typer.Option("2022-10-01", help="first date, YYYY-MM-DD"),
+    end: str = typer.Option(None, help="last date, YYYY-MM-DD (default: today)"),
+) -> None:
+    """Backfill NBA games (regular season + playoffs) from ESPN."""
+    import asyncio
+    import datetime as dt
+
+    from engine.ingestion.backfill import backfill_games
+
+    async def run() -> None:
+        async with _clients() as (store, espn, _kalshi):
+            stats = await backfill_games(
+                espn,
+                store,
+                start=dt.date.fromisoformat(start),
+                end=dt.date.fromisoformat(end) if end else dt.datetime.now(dt.UTC).date(),
+            )
+        typer.echo(
+            f"games: {stats.games_upserted} upserted over {stats.dates_fetched} dates "
+            f"({stats.games_skipped_preseason} preseason skipped)"
+        )
+
+    asyncio.run(run())
+
+
+@ingest_app.command("markets")
+def ingest_markets() -> None:
+    """Backfill every NBA market Kalshi still serves; cross-check settlements."""
+    import asyncio
+
+    from engine.ingestion.backfill import backfill_markets
+
+    async def run() -> None:
+        async with _clients() as (store, _espn, kalshi):
+            stats = await backfill_markets(kalshi, store)
+        typer.echo(
+            f"markets: {stats.markets_upserted} upserted, "
+            f"{len(stats.markets_unmatched)} unmatched to games, "
+            f"{len(stats.result_mismatches)} settlement mismatches"
+        )
+        if stats.result_mismatches:
+            raise typer.Exit(1)
+
+    asyncio.run(run())
+
+
+@ingest_app.command("candles")
+def ingest_candles(
+    pre_tipoff_hours: int = typer.Option(24, help="history to keep before tipoff"),
+) -> None:
+    """Backfill 1-minute price candles for every market matched to a game."""
+    import asyncio
+    import datetime as dt
+
+    from engine.ingestion.backfill import backfill_candles
+
+    async def run() -> None:
+        async with _clients() as (store, _espn, kalshi):
+            stats = await backfill_candles(
+                kalshi, store, pre_tipoff=dt.timedelta(hours=pre_tipoff_hours)
+            )
+        typer.echo(f"candles: {stats.candles_upserted} upserted")
+
+    asyncio.run(run())
+
+
+@ingest_app.command("snapshots")
+def ingest_snapshots(
+    all_games: bool = typer.Option(
+        False, "--all-games", help="every stored final game, not just those with markets"
+    ),
+) -> None:
+    """Backfill play-by-play snapshots for stored final games."""
+    import asyncio
+
+    from engine.ingestion.backfill import backfill_snapshots
+
+    async def run() -> None:
+        async with _clients() as (store, espn, _kalshi):
+            stats = await backfill_snapshots(espn, store, only_with_markets=not all_games)
+        typer.echo(
+            f"snapshots: {stats.snapshots_upserted} upserted across {stats.games_snapshotted} games"
+        )
+
+    asyncio.run(run())
+
+
+@ingest_app.command("verify")
+def ingest_verify() -> None:
+    """Integrity-check the dataset; exits 1 on settlement mismatches."""
+    from engine.ingestion.backfill import verify_dataset
+
+    store = _store()
+    report = verify_dataset(store)
+    for line in report.lines():
+        typer.echo(line)
+    if not report.ok:
+        raise typer.Exit(1)
+
+
+@ingest_app.command("all")
+def ingest_all(
+    start: str = typer.Option("2022-10-01", help="first game date, YYYY-MM-DD"),
+) -> None:
+    """Full pipeline: games -> markets -> candles -> snapshots -> verify."""
+    import asyncio
+    import datetime as dt
+
+    from engine.ingestion.backfill import (
+        backfill_candles,
+        backfill_games,
+        backfill_markets,
+        backfill_snapshots,
+        verify_dataset,
+    )
+
+    async def run() -> None:
+        async with _clients() as (store, espn, kalshi):
+            g = await backfill_games(
+                espn, store, start=dt.date.fromisoformat(start), end=dt.datetime.now(dt.UTC).date()
+            )
+            typer.echo(f"games: {g.games_upserted}")
+            m = await backfill_markets(kalshi, store)
+            typer.echo(f"markets: {m.markets_upserted} ({len(m.markets_unmatched)} unmatched)")
+            c = await backfill_candles(kalshi, store)
+            typer.echo(f"candles: {c.candles_upserted}")
+            s = await backfill_snapshots(espn, store)
+            typer.echo(f"snapshots: {s.snapshots_upserted} across {s.games_snapshotted} games")
+            report = verify_dataset(store)
+            for line in report.lines():
+                typer.echo(line)
+            if not report.ok:
+                raise typer.Exit(1)
+
+    asyncio.run(run())
 
 
 @app.command()

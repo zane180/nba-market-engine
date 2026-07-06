@@ -45,8 +45,8 @@ default and multiply gated.
 ## Roadmap
 
 - [x] Phase 0 — scaffold: tooling, CI, typed domain models, CLI skeleton
-- [ ] Phase 1 — ingestion: ESPN + Kalshi clients, team-mapping layer
-- [ ] Phase 2 — storage + historical backfill
+- [x] Phase 1 — ingestion: ESPN + Kalshi clients, team-mapping layer
+- [x] Phase 2 — storage + historical backfill
 - [ ] Phase 3 — pre-game model (Elo → GBM) + calibration vs. market
 - [ ] Phase 4 — live in-game win-probability model
 - [ ] Phase 5 — walk-forward backtest engine (fees, sizing, leakage guards)

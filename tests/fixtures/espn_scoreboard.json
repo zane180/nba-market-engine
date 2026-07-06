@@ -286,6 +286,11 @@
    "date": "2026-01-15T19:00Z",
    "name": "Memphis Grizzlies at Orlando Magic",
    "shortName": "MEM VS ORL",
+   "season": {
+    "year": 2026,
+    "type": 2,
+    "slug": "regular-season"
+   },
    "competitions": [
     {
      "id": "401810433",
@@ -393,6 +398,11 @@
    "date": "2026-01-16T00:00Z",
    "name": "Phoenix Suns at Detroit Pistons",
    "shortName": "PHX @ DET",
+   "season": {
+    "year": 2026,
+    "type": 2,
+    "slug": "regular-season"
+   },
    "competitions": [
     {
      "id": "401810434",
@@ -500,6 +510,11 @@
    "date": "2026-01-16T00:30Z",
    "name": "Boston Celtics at Miami Heat",
    "shortName": "BOS @ MIA",
+   "season": {
+    "year": 2026,
+    "type": 2,
+    "slug": "regular-season"
+   },
    "competitions": [
     {
      "id": "401810435",
