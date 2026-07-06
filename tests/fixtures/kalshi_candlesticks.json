@@ -1,0 +1,80 @@
+{
+ "ticker": "KXNBAGAME-26JUN13NYKSAS-SAS",
+ "candlesticks": [
+  {
+   "end_period_ts": 1781301600,
+   "open_interest_fp": "1558910.90",
+   "price": {
+    "close_dollars": "0.6400",
+    "high_dollars": "0.6500",
+    "low_dollars": "0.6400",
+    "mean_dollars": "0.6498",
+    "open_dollars": "0.6500",
+    "previous_dollars": "0.6500"
+   },
+   "volume_fp": "73570.84",
+   "yes_ask": {
+    "close_dollars": "0.6500",
+    "high_dollars": "0.6500",
+    "low_dollars": "0.6500",
+    "open_dollars": "0.6500"
+   },
+   "yes_bid": {
+    "close_dollars": "0.6400",
+    "high_dollars": "0.6400",
+    "low_dollars": "0.6400",
+    "open_dollars": "0.6400"
+   }
+  },
+  {
+   "end_period_ts": 1781305200,
+   "open_interest_fp": "1603108.57",
+   "price": {
+    "close_dollars": "0.6500",
+    "high_dollars": "0.6500",
+    "low_dollars": "0.6400",
+    "mean_dollars": "0.6483",
+    "open_dollars": "0.6400",
+    "previous_dollars": "0.6400"
+   },
+   "volume_fp": "67175.22",
+   "yes_ask": {
+    "close_dollars": "0.6500",
+    "high_dollars": "0.6500",
+    "low_dollars": "0.6500",
+    "open_dollars": "0.6500"
+   },
+   "yes_bid": {
+    "close_dollars": "0.6400",
+    "high_dollars": "0.6400",
+    "low_dollars": "0.6400",
+    "open_dollars": "0.6400"
+   }
+  },
+  {
+   "end_period_ts": 1781308800,
+   "open_interest_fp": "1756063.59",
+   "price": {
+    "close_dollars": "0.6500",
+    "high_dollars": "0.6500",
+    "low_dollars": "0.6400",
+    "mean_dollars": "0.6497",
+    "open_dollars": "0.6500",
+    "previous_dollars": "0.6500"
+   },
+   "volume_fp": "161410.90",
+   "yes_ask": {
+    "close_dollars": "0.6500",
+    "high_dollars": "0.6500",
+    "low_dollars": "0.6500",
+    "open_dollars": "0.6500"
+   },
+   "yes_bid": {
+    "close_dollars": "0.6400",
+    "high_dollars": "0.6400",
+    "low_dollars": "0.6400",
+    "open_dollars": "0.6400"
+   }
+  }
+ ]
+}

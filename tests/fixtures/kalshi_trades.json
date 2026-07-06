@@ -1,0 +1,41 @@
+{
+ "cursor": "EhIKEDibKqGqXkVhocRsGBPzNVwaDAjkwLjRBhCYyayJAw",
+ "trades": [
+  {
+   "count_fp": "93.51",
+   "created_time": "2026-06-14T03:30:45.993203Z",
+   "is_block_trade": false,
+   "no_price_dollars": "0.9900",
+   "taker_book_side": "bid",
+   "taker_outcome_side": "yes",
+   "taker_side": "yes",
+   "ticker": "KXNBAGAME-26JUN13NYKSAS-SAS",
+   "trade_id": "85ea2959-619e-6315-a2fe-98b859c6ab90",
+   "yes_price_dollars": "0.0100"
+  },
+  {
+   "count_fp": "93.51",
+   "created_time": "2026-06-14T03:30:45.622443Z",
+   "is_block_trade": false,
+   "no_price_dollars": "0.9900",
+   "taker_book_side": "bid",
+   "taker_outcome_side": "yes",
+   "taker_side": "yes",
+   "ticker": "KXNBAGAME-26JUN13NYKSAS-SAS",
+   "trade_id": "50d5a267-2112-6665-ce3a-d6a722209890",
+   "yes_price_dollars": "0.0100"
+  },
+  {
+   "count_fp": "22.07",
+   "created_time": "2026-06-14T03:30:44.824911Z",
+   "is_block_trade": false,
+   "no_price_dollars": "0.9900",
+   "taker_book_side": "bid",
+   "taker_outcome_side": "yes",
+   "taker_side": "yes",
+   "ticker": "KXNBAGAME-26JUN13NYKSAS-SAS",
+   "trade_id": "389b2aa1-aa5e-4561-a1c4-6c1813f3355c",
+   "yes_price_dollars": "0.0100"
+  }
+ ]
+}

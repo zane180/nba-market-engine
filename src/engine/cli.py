@@ -50,6 +50,53 @@ def paper() -> None:
 
 
 @app.command()
+def probe(date: str = typer.Option("2026-01-15", help="past date to probe, YYYY-MM-DD")) -> None:
+    """Live health check: verify both upstream APIs still match our parsers.
+
+    Fetches a real ESPN scoreboard, maps each game to its Kalshi event ticker,
+    and confirms the event exists on Kalshi. Exits nonzero on schema drift.
+    """
+    import asyncio
+    import datetime as dt
+
+    import httpx
+
+    from engine.ingestion.espn import EspnClient
+    from engine.ingestion.http import RetryingClient
+    from engine.ingestion.kalshi import KalshiPublicClient
+    from engine.ingestion.mapping import game_event_ticker
+
+    settings = load_settings()
+    day = dt.date.fromisoformat(date)
+
+    async def run() -> None:
+        async with httpx.AsyncClient(timeout=30) as client:
+            http = RetryingClient(client)
+            espn = EspnClient(http, settings.espn_api_base)
+            kalshi = KalshiPublicClient(http, settings.kalshi_api_base)
+
+            games = await espn.scoreboard(day)
+            typer.echo(f"ESPN: {len(games)} games on {day}")
+            checked = 0
+            for game in games[:3]:
+                ticker = game_event_ticker(
+                    away_espn_name=game.away_team,
+                    home_espn_name=game.home_team,
+                    tipoff=game.start_time,
+                )
+                event = await kalshi.event(ticker)
+                title = event.get("event", {}).get("title", "?")
+                typer.echo(
+                    f"  {game.away_team} @ {game.home_team} ({game.status}) "
+                    f"-> {ticker} -> Kalshi: {title!r}"
+                )
+                checked += 1
+            typer.echo(f"OK: {checked} games cross-verified against Kalshi events")
+
+    asyncio.run(run())
+
+
+@app.command()
 def config() -> None:
     """Print effective (non-secret) configuration."""
     settings = load_settings()

@@ -1,0 +1,605 @@
+{
+ "leagues": [
+  {
+   "id": "46",
+   "uid": "s:40~l:46",
+   "name": "National Basketball Association",
+   "abbreviation": "NBA",
+   "slug": "nba",
+   "season": {
+    "year": 2026,
+    "startDate": "2025-10-01T07:00Z",
+    "endDate": "2026-06-27T06:59Z",
+    "displayName": "2025-26",
+    "type": {
+     "id": "2",
+     "type": 2,
+     "name": "Regular Season",
+     "abbreviation": "reg"
+    }
+   },
+   "logos": [
+    {
+     "href": "https://a.espncdn.com/i/teamlogos/leagues/500/nba.png",
+     "width": 500,
+     "height": 500,
+     "alt": "",
+     "rel": [
+      "full",
+      "default"
+     ],
+     "lastUpdated": "2018-06-05T12:07Z"
+    },
+    {
+     "href": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/leagues/500-dark/nba.png&w=500&h=500&transparent=true",
+     "width": 500,
+     "height": 500,
+     "alt": "",
+     "rel": [
+      "full",
+      "dark"
+     ],
+     "lastUpdated": "2026-07-05T05:34Z"
+    }
+   ],
+   "calendarType": "day",
+   "calendarIsWhitelist": true,
+   "calendarStartDate": "2025-10-01T07:00Z",
+   "calendarEndDate": "2026-06-27T06:59Z",
+   "calendar": [
+    "2025-10-02T07:00Z",
+    "2025-10-03T07:00Z",
+    "2025-10-04T07:00Z",
+    "2025-10-05T07:00Z",
+    "2025-10-06T07:00Z",
+    "2025-10-07T07:00Z",
+    "2025-10-08T07:00Z",
+    "2025-10-09T07:00Z",
+    "2025-10-10T07:00Z",
+    "2025-10-11T07:00Z",
+    "2025-10-12T07:00Z",
+    "2025-10-13T07:00Z",
+    "2025-10-14T07:00Z",
+    "2025-10-15T07:00Z",
+    "2025-10-16T07:00Z",
+    "2025-10-17T07:00Z",
+    "2025-10-21T07:00Z",
+    "2025-10-22T07:00Z",
+    "2025-10-23T07:00Z",
+    "2025-10-24T07:00Z",
+    "2025-10-25T07:00Z",
+    "2025-10-26T07:00Z",
+    "2025-10-27T07:00Z",
+    "2025-10-28T07:00Z",
+    "2025-10-29T07:00Z",
+    "2025-10-30T07:00Z",
+    "2025-10-31T07:00Z",
+    "2025-11-01T07:00Z",
+    "2025-11-02T07:00Z",
+    "2025-11-03T08:00Z",
+    "2025-11-04T08:00Z",
+    "2025-11-05T08:00Z",
+    "2025-11-06T08:00Z",
+    "2025-11-07T08:00Z",
+    "2025-11-08T08:00Z",
+    "2025-11-09T08:00Z",
+    "2025-11-10T08:00Z",
+    "2025-11-11T08:00Z",
+    "2025-11-12T08:00Z",
+    "2025-11-13T08:00Z",
+    "2025-11-14T08:00Z",
+    "2025-11-15T08:00Z",
+    "2025-11-16T08:00Z",
+    "2025-11-17T08:00Z",
+    "2025-11-18T08:00Z",
+    "2025-11-19T08:00Z",
+    "2025-11-20T08:00Z",
+    "2025-11-21T08:00Z",
+    "2025-11-22T08:00Z",
+    "2025-11-23T08:00Z",
+    "2025-11-24T08:00Z",
+    "2025-11-25T08:00Z",
+    "2025-11-26T08:00Z",
+    "2025-11-28T08:00Z",
+    "2025-11-29T08:00Z",
+    "2025-11-30T08:00Z",
+    "2025-12-01T08:00Z",
+    "2025-12-02T08:00Z",
+    "2025-12-03T08:00Z",
+    "2025-12-04T08:00Z",
+    "2025-12-05T08:00Z",
+    "2025-12-06T08:00Z",
+    "2025-12-07T08:00Z",
+    "2025-12-08T08:00Z",
+    "2025-12-09T08:00Z",
+    "2025-12-10T08:00Z",
+    "2025-12-11T08:00Z",
+    "2025-12-12T08:00Z",
+    "2025-12-13T08:00Z",
+    "2025-12-14T08:00Z",
+    "2025-12-15T08:00Z",
+    "2025-12-16T08:00Z",
+    "2025-12-17T08:00Z",
+    "2025-12-18T08:00Z",
+    "2025-12-19T08:00Z",
+    "2025-12-20T08:00Z",
+    "2025-12-21T08:00Z",
+    "2025-12-22T08:00Z",
+    "2025-12-23T08:00Z",
+    "2025-12-25T08:00Z",
+    "2025-12-26T08:00Z",
+    "2025-12-27T08:00Z",
+    "2025-12-28T08:00Z",
+    "2025-12-29T08:00Z",
+    "2025-12-30T08:00Z",
+    "2025-12-31T08:00Z",
+    "2026-01-01T08:00Z",
+    "2026-01-02T08:00Z",
+    "2026-01-03T08:00Z",
+    "2026-01-04T08:00Z",
+    "2026-01-05T08:00Z",
+    "2026-01-06T08:00Z",
+    "2026-01-07T08:00Z",
+    "2026-01-08T08:00Z",
+    "2026-01-09T08:00Z",
+    "2026-01-10T08:00Z",
+    "2026-01-11T08:00Z",
+    "2026-01-12T08:00Z",
+    "2026-01-13T08:00Z",
+    "2026-01-14T08:00Z",
+    "2026-01-15T08:00Z",
+    "2026-01-16T08:00Z",
+    "2026-01-17T08:00Z",
+    "2026-01-18T08:00Z",
+    "2026-01-19T08:00Z",
+    "2026-01-20T08:00Z",
+    "2026-01-21T08:00Z",
+    "2026-01-22T08:00Z",
+    "2026-01-23T08:00Z",
+    "2026-01-24T08:00Z",
+    "2026-01-25T08:00Z",
+    "2026-01-26T08:00Z",
+    "2026-01-27T08:00Z",
+    "2026-01-28T08:00Z",
+    "2026-01-29T08:00Z",
+    "2026-01-30T08:00Z",
+    "2026-01-31T08:00Z",
+    "2026-02-01T08:00Z",
+    "2026-02-02T08:00Z",
+    "2026-02-03T08:00Z",
+    "2026-02-04T08:00Z",
+    "2026-02-05T08:00Z",
+    "2026-02-06T08:00Z",
+    "2026-02-07T08:00Z",
+    "2026-02-08T08:00Z",
+    "2026-02-09T08:00Z",
+    "2026-02-10T08:00Z",
+    "2026-02-11T08:00Z",
+    "2026-02-12T08:00Z",
+    "2026-02-15T08:00Z",
+    "2026-02-19T08:00Z",
+    "2026-02-20T08:00Z",
+    "2026-02-21T08:00Z",
+    "2026-02-22T08:00Z",
+    "2026-02-23T08:00Z",
+    "2026-02-24T08:00Z",
+    "2026-02-25T08:00Z",
+    "2026-02-26T08:00Z",
+    "2026-02-27T08:00Z",
+    "2026-02-28T08:00Z",
+    "2026-03-01T08:00Z",
+    "2026-03-02T08:00Z",
+    "2026-03-03T08:00Z",
+    "2026-03-04T08:00Z",
+    "2026-03-05T08:00Z",
+    "2026-03-06T08:00Z",
+    "2026-03-07T08:00Z",
+    "2026-03-08T08:00Z",
+    "2026-03-09T07:00Z",
+    "2026-03-10T07:00Z",
+    "2026-03-11T07:00Z",
+    "2026-03-12T07:00Z",
+    "2026-03-13T07:00Z",
+    "2026-03-14T07:00Z",
+    "2026-03-15T07:00Z",
+    "2026-03-16T07:00Z",
+    "2026-03-17T07:00Z",
+    "2026-03-18T07:00Z",
+    "2026-03-19T07:00Z",
+    "2026-03-20T07:00Z",
+    "2026-03-21T07:00Z",
+    "2026-03-22T07:00Z",
+    "2026-03-23T07:00Z",
+    "2026-03-24T07:00Z",
+    "2026-03-25T07:00Z",
+    "2026-03-26T07:00Z",
+    "2026-03-27T07:00Z",
+    "2026-03-28T07:00Z",
+    "2026-03-29T07:00Z",
+    "2026-03-30T07:00Z",
+    "2026-03-31T07:00Z",
+    "2026-04-01T07:00Z",
+    "2026-04-02T07:00Z",
+    "2026-04-03T07:00Z",
+    "2026-04-04T07:00Z",
+    "2026-04-05T07:00Z",
+    "2026-04-06T07:00Z",
+    "2026-04-07T07:00Z",
+    "2026-04-08T07:00Z",
+    "2026-04-09T07:00Z",
+    "2026-04-10T07:00Z",
+    "2026-04-12T07:00Z",
+    "2026-04-14T07:00Z",
+    "2026-04-15T07:00Z",
+    "2026-04-17T07:00Z",
+    "2026-04-18T07:00Z",
+    "2026-04-19T07:00Z",
+    "2026-04-20T07:00Z",
+    "2026-04-21T07:00Z",
+    "2026-04-22T07:00Z",
+    "2026-04-23T07:00Z",
+    "2026-04-24T07:00Z",
+    "2026-04-25T07:00Z",
+    "2026-04-26T07:00Z",
+    "2026-04-27T07:00Z",
+    "2026-04-28T07:00Z",
+    "2026-04-29T07:00Z",
+    "2026-04-30T07:00Z",
+    "2026-05-01T07:00Z",
+    "2026-05-02T07:00Z",
+    "2026-05-03T07:00Z",
+    "2026-05-04T07:00Z",
+    "2026-05-05T07:00Z",
+    "2026-05-06T07:00Z",
+    "2026-05-07T07:00Z",
+    "2026-05-08T07:00Z",
+    "2026-05-09T07:00Z",
+    "2026-05-10T07:00Z",
+    "2026-05-11T07:00Z",
+    "2026-05-12T07:00Z",
+    "2026-05-13T07:00Z",
+    "2026-05-15T07:00Z",
+    "2026-05-17T07:00Z",
+    "2026-05-18T07:00Z",
+    "2026-05-19T07:00Z",
+    "2026-05-20T07:00Z",
+    "2026-05-21T07:00Z",
+    "2026-05-22T07:00Z",
+    "2026-05-23T07:00Z",
+    "2026-05-24T07:00Z",
+    "2026-05-25T07:00Z",
+    "2026-05-26T07:00Z",
+    "2026-05-28T07:00Z",
+    "2026-05-30T07:00Z",
+    "2026-06-03T07:00Z",
+    "2026-06-05T07:00Z",
+    "2026-06-08T07:00Z",
+    "2026-06-10T07:00Z",
+    "2026-06-13T07:00Z"
+   ]
+  }
+ ],
+ "events": [
+  {
+   "id": "401810433",
+   "uid": "s:40~l:46~e:401810433",
+   "date": "2026-01-15T19:00Z",
+   "name": "Memphis Grizzlies at Orlando Magic",
+   "shortName": "MEM VS ORL",
+   "competitions": [
+    {
+     "id": "401810433",
+     "date": "2026-01-15T19:00Z",
+     "neutralSite": true,
+     "competitors": [
+      {
+       "id": "19",
+       "homeAway": "home",
+       "winner": true,
+       "team": {
+        "id": "19",
+        "location": "Orlando",
+        "name": "Magic",
+        "abbreviation": "ORL",
+        "displayName": "Orlando Magic"
+       },
+       "score": "118",
+       "records": [
+        {
+         "name": "overall",
+         "abbreviation": "Game",
+         "type": "total",
+         "summary": "23-18"
+        },
+        {
+         "name": "Home",
+         "type": "home",
+         "summary": "14-7"
+        },
+        {
+         "name": "Road",
+         "type": "road",
+         "summary": "9-11"
+        }
+       ]
+      },
+      {
+       "id": "29",
+       "homeAway": "away",
+       "winner": false,
+       "team": {
+        "id": "29",
+        "location": "Memphis",
+        "name": "Grizzlies",
+        "abbreviation": "MEM",
+        "displayName": "Memphis Grizzlies"
+       },
+       "score": "111",
+       "records": [
+        {
+         "name": "overall",
+         "abbreviation": "Game",
+         "type": "total",
+         "summary": "17-23"
+        },
+        {
+         "name": "Home",
+         "type": "home",
+         "summary": "9-11"
+        },
+        {
+         "name": "Road",
+         "type": "road",
+         "summary": "8-12"
+        }
+       ]
+      }
+     ],
+     "status": {
+      "clock": 720.0,
+      "displayClock": "12:00",
+      "period": 4,
+      "type": {
+       "id": "3",
+       "name": "STATUS_FINAL",
+       "state": "post",
+       "completed": true,
+       "description": "Final",
+       "detail": "Final",
+       "shortDetail": "Final"
+      }
+     },
+     "startDate": "2026-01-15T19:00Z"
+    }
+   ],
+   "status": {
+    "clock": 720.0,
+    "displayClock": "12:00",
+    "period": 4,
+    "type": {
+     "id": "3",
+     "name": "STATUS_FINAL",
+     "state": "post",
+     "completed": true,
+     "description": "Final",
+     "detail": "Final",
+     "shortDetail": "Final"
+    }
+   }
+  },
+  {
+   "id": "401810434",
+   "uid": "s:40~l:46~e:401810434",
+   "date": "2026-01-16T00:00Z",
+   "name": "Phoenix Suns at Detroit Pistons",
+   "shortName": "PHX @ DET",
+   "competitions": [
+    {
+     "id": "401810434",
+     "date": "2026-01-16T00:00Z",
+     "neutralSite": false,
+     "competitors": [
+      {
+       "id": "8",
+       "homeAway": "home",
+       "winner": true,
+       "team": {
+        "id": "8",
+        "location": "Detroit",
+        "name": "Pistons",
+        "abbreviation": "DET",
+        "displayName": "Detroit Pistons"
+       },
+       "score": "108",
+       "records": [
+        {
+         "name": "overall",
+         "abbreviation": "Game",
+         "type": "total",
+         "summary": "29-10"
+        },
+        {
+         "name": "Home",
+         "type": "home",
+         "summary": "16-4"
+        },
+        {
+         "name": "Road",
+         "type": "road",
+         "summary": "13-6"
+        }
+       ]
+      },
+      {
+       "id": "21",
+       "homeAway": "away",
+       "winner": false,
+       "team": {
+        "id": "21",
+        "location": "Phoenix",
+        "name": "Suns",
+        "abbreviation": "PHX",
+        "displayName": "Phoenix Suns"
+       },
+       "score": "105",
+       "records": [
+        {
+         "name": "overall",
+         "abbreviation": "Game",
+         "type": "total",
+         "summary": "24-17"
+        },
+        {
+         "name": "Home",
+         "type": "home",
+         "summary": "14-5"
+        },
+        {
+         "name": "Road",
+         "type": "road",
+         "summary": "10-12"
+        }
+       ]
+      }
+     ],
+     "status": {
+      "clock": 720.0,
+      "displayClock": "12:00",
+      "period": 4,
+      "type": {
+       "id": "3",
+       "name": "STATUS_FINAL",
+       "state": "post",
+       "completed": true,
+       "description": "Final",
+       "detail": "Final",
+       "shortDetail": "Final"
+      }
+     },
+     "startDate": "2026-01-16T00:00Z"
+    }
+   ],
+   "status": {
+    "clock": 720.0,
+    "displayClock": "12:00",
+    "period": 4,
+    "type": {
+     "id": "3",
+     "name": "STATUS_FINAL",
+     "state": "post",
+     "completed": true,
+     "description": "Final",
+     "detail": "Final",
+     "shortDetail": "Final"
+    }
+   }
+  },
+  {
+   "id": "401810435",
+   "uid": "s:40~l:46~e:401810435",
+   "date": "2026-01-16T00:30Z",
+   "name": "Boston Celtics at Miami Heat",
+   "shortName": "BOS @ MIA",
+   "competitions": [
+    {
+     "id": "401810435",
+     "date": "2026-01-16T00:30Z",
+     "neutralSite": false,
+     "competitors": [
+      {
+       "id": "14",
+       "homeAway": "home",
+       "winner": false,
+       "team": {
+        "id": "14",
+        "location": "Miami",
+        "name": "Heat",
+        "abbreviation": "MIA",
+        "displayName": "Miami Heat"
+       },
+       "score": "114",
+       "records": [
+        {
+         "name": "overall",
+         "abbreviation": "Game",
+         "type": "total",
+         "summary": "21-20"
+        },
+        {
+         "name": "Home",
+         "type": "home",
+         "summary": "14-7"
+        },
+        {
+         "name": "Road",
+         "type": "road",
+         "summary": "7-13"
+        }
+       ]
+      },
+      {
+       "id": "2",
+       "homeAway": "away",
+       "winner": true,
+       "team": {
+        "id": "2",
+        "location": "Boston",
+        "name": "Celtics",
+        "abbreviation": "BOS",
+        "displayName": "Boston Celtics"
+       },
+       "score": "119",
+       "records": [
+        {
+         "name": "overall",
+         "abbreviation": "Game",
+         "type": "total",
+         "summary": "25-15"
+        },
+        {
+         "name": "Home",
+         "type": "home",
+         "summary": "12-7"
+        },
+        {
+         "name": "Road",
+         "type": "road",
+         "summary": "13-8"
+        }
+       ]
+      }
+     ],
+     "status": {
+      "clock": 720.0,
+      "displayClock": "12:00",
+      "period": 4,
+      "type": {
+       "id": "3",
+       "name": "STATUS_FINAL",
+       "state": "post",
+       "completed": true,
+       "description": "Final",
+       "detail": "Final",
+       "shortDetail": "Final"
+      }
+     },
+     "startDate": "2026-01-16T00:30Z"
+    }
+   ],
+   "status": {
+    "clock": 720.0,
+    "displayClock": "12:00",
+    "period": 4,
+    "type": {
+     "id": "3",
+     "name": "STATUS_FINAL",
+     "state": "post",
+     "completed": true,
+     "description": "Final",
+     "detail": "Final",
+     "shortDetail": "Final"
+    }
+   }
+  }
+ ]
+}

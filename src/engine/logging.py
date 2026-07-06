@@ -24,6 +24,9 @@ def configure_logging(*, json_output: bool = False, level: int = logging.INFO) -
             renderer,
         ],
         wrapper_class=structlog.make_filtering_bound_logger(level),
-        logger_factory=structlog.PrintLoggerFactory(sys.stderr),
-        cache_logger_on_first_use=True,
+        # Resolve the output stream at emit time and never cache the bound
+        # logger: a cached logger holds whatever sys.stderr was at configure
+        # time, which breaks under test runners that swap/close the stream.
+        logger_factory=lambda *args: structlog.PrintLogger(sys.stderr),
+        cache_logger_on_first_use=False,
     )
