@@ -1,0 +1,20 @@
+# environments & secrets
+.env
+.venv/
+
+# data & caches — raw ingested data is regenerable, never committed
+data/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+__pycache__/
+*.py[cod]
+
+# notebooks: keep outputs out of diffs (reports/ holds the rendered artifacts)
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

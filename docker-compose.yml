@@ -1,0 +1,22 @@
+services:
+  engine:
+    build: .
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      - ./reports:/app/reports
+
+  # Prod-shaped storage; dev defaults to SQLite and doesn't need this running.
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: engine
+      POSTGRES_USER: engine
+      POSTGRES_PASSWORD: engine
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
