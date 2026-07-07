@@ -1,0 +1,11 @@
+.git
+.venv
+data/
+reports/
+notebooks/
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+.env
+deploy/

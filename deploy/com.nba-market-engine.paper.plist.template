@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  launchd agent for the paper-trading loop / market recorder.
+  Installed by `make install-paper-daemon` (which substitutes __REPO__ and
+  __UV__); remove with `make uninstall-paper-daemon`.
+
+  Runs year-round: a tick with no NBA games is one scoreboard request and a
+  no-op. KeepAlive restarts the loop if it ever exits.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.nba-market-engine.paper</string>
+  <key>WorkingDirectory</key>
+  <string>__REPO__</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__UV__</string>
+    <string>run</string>
+    <string>--no-sync</string>
+    <string>engine</string>
+    <string>paper</string>
+    <string>--interval</string>
+    <string>60</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>60</integer>
+  <key>StandardOutPath</key>
+  <string>__REPO__/data/logs/paper.log</string>
+  <key>StandardErrorPath</key>
+  <string>__REPO__/data/logs/paper.log</string>
+</dict>
+</plist>

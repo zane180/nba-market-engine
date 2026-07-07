@@ -27,5 +27,20 @@ repro:            ## Regenerate every number cited in the README from scratch
 	uv run engine report live
 	uv run engine backtest
 
+PLIST = $(HOME)/Library/LaunchAgents/com.nba-market-engine.paper.plist
+
+install-paper-daemon:   ## launchd agent: run the paper loop continuously
+	mkdir -p data/logs $(HOME)/Library/LaunchAgents
+	sed -e "s|__REPO__|$(CURDIR)|g" -e "s|__UV__|$$(command -v uv)|g" \
+		deploy/com.nba-market-engine.paper.plist.template > $(PLIST)
+	launchctl unload $(PLIST) 2>/dev/null || true
+	launchctl load $(PLIST)
+	@echo "installed; logs: data/logs/paper.log"
+
+uninstall-paper-daemon:
+	launchctl unload $(PLIST) 2>/dev/null || true
+	rm -f $(PLIST)
+	@echo "removed"
+
 clean:
 	rm -rf .venv .pytest_cache .mypy_cache .ruff_cache .coverage
