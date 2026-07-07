@@ -47,6 +47,7 @@ class BackfillStats:
     candles_upserted: int = 0
     snapshots_upserted: int = 0
     games_snapshotted: int = 0
+    games_snapshot_failed: int = 0
 
 
 async def backfill_games(
@@ -201,27 +202,56 @@ async def backfill_snapshots(
     start: datetime | None = None,
     end: datetime | None = None,
     only_with_markets: bool = True,
+    skip_existing: bool = True,
     concurrency: int = 4,
 ) -> BackfillStats:
     """Play-by-play snapshots for stored FINAL games (the live model's training
-    rows). Defaults to only games that have market data, so the joined
-    dataset stays aligned; pass ``only_with_markets=False`` for deep history."""
+    rows). Defaults to only games that have market data; pass
+    ``only_with_markets=False`` for the deep-history training backfill.
+
+    Bulk mode is failure-tolerant per game: one historical game with a broken
+    summary shouldn't kill a 5,000-game run. Skipped games are counted and
+    logged, never silently absorbed.
+    """
+    from engine.ingestion.espn import SchemaDriftError
+    from engine.ingestion.http import UpstreamError
+
     stats = BackfillStats()
     final_games = store.games(start=start, end=end, statuses=[GameStatus.FINAL])
     if only_with_markets:
         with_markets = {m.game_id for m in store.markets(with_game_only=True)}
         final_games = [g for g in final_games if g.game_id in with_markets]
+    if skip_existing:
+        done = store.game_ids_with_snapshots()
+        final_games = [g for g in final_games if g.game_id not in done]
 
     semaphore = asyncio.Semaphore(concurrency)
 
-    async def fetch(game: Game) -> int:
+    async def fetch(game: Game) -> int | None:
         async with semaphore:
-            snapshots = await espn.game_snapshots(game.game_id, final=True)
+            try:
+                snapshots = await espn.game_snapshots(game.game_id)
+            except (SchemaDriftError, UpstreamError) as exc:
+                logger.warning(
+                    "snapshot backfill skipped game", game_id=game.game_id, error=str(exc)
+                )
+                return None
         return store.upsert_snapshots(snapshots)
 
-    for count in await asyncio.gather(*(fetch(g) for g in final_games)):
-        stats.snapshots_upserted += count
-        stats.games_snapshotted += 1
+    for chunk_start in range(0, len(final_games), 200):
+        chunk = final_games[chunk_start : chunk_start + 200]
+        for count in await asyncio.gather(*(fetch(g) for g in chunk)):
+            if count is None:
+                stats.games_snapshot_failed += 1
+            else:
+                stats.snapshots_upserted += count
+                stats.games_snapshotted += 1
+        logger.info(
+            "snapshot backfill progress",
+            games=stats.games_snapshotted,
+            snapshots=stats.snapshots_upserted,
+            failed=stats.games_snapshot_failed,
+        )
     return stats
 
 

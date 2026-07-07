@@ -167,7 +167,8 @@ def ingest_snapshots(
         async with _clients() as (store, espn, _kalshi):
             stats = await backfill_snapshots(espn, store, only_with_markets=not all_games)
         typer.echo(
-            f"snapshots: {stats.snapshots_upserted} upserted across {stats.games_snapshotted} games"
+            f"snapshots: {stats.snapshots_upserted} upserted across "
+            f"{stats.games_snapshotted} games ({stats.games_snapshot_failed} games failed)"
         )
 
     asyncio.run(run())
@@ -250,6 +251,29 @@ def report_pregame(
     for block in evaluation.market_subset:
         typer.echo(f"  [market] {block.name}: brier={block.brier:.4f} n={block.n}")
     typer.echo(f"reports written to {Path('reports').resolve()}")
+
+
+@report_app.command("live")
+def report_live(
+    first_test_season: int = typer.Option(
+        2026, help="first season (end year) evaluated walk-forward"
+    ),
+) -> None:
+    """Live WP model vs. the in-game de-vigged market: metrics + charts."""
+    from engine.models.live_evaluation import run_live_evaluation
+
+    settings = load_settings()
+    ev = run_live_evaluation(
+        _store(), first_test_season=first_test_season, seed=settings.random_seed
+    )
+    for name, n, brier, _ll, ece in ev.full_metrics:
+        typer.echo(f"  [full]   {name}: brier={brier:.4f} ece={ece:.4f} n={n}")
+    point, lo, hi = ev.diff_ci
+    typer.echo(
+        f"  [market] model {ev.model_brier:.4f} vs market {ev.market_brier:.4f} "
+        f"on {ev.joined_n_snapshots} snapshots / {ev.joined_n_games} games; "
+        f"diff {point:+.4f} CI [{lo:+.4f},{hi:+.4f}]"
+    )
 
 
 @app.command()

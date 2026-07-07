@@ -15,10 +15,14 @@ nowhere else.
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import sqlalchemy as sa
+
+if TYPE_CHECKING:
+    import numpy as np
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
@@ -101,6 +105,21 @@ class SchemaVersionError(RuntimeError):
     pass
 
 
+@dataclass(frozen=True)
+class SnapshotColumns:
+    """Column-oriented view of game_snapshots for bulk model training."""
+
+    game_id: list[str]
+    as_of_epoch: np.ndarray[Any, np.dtype[np.int64]]
+    period: np.ndarray[Any, np.dtype[np.int64]]
+    seconds_remaining_in_period: np.ndarray[Any, np.dtype[np.float64]]
+    home_score: np.ndarray[Any, np.dtype[np.int64]]
+    away_score: np.ndarray[Any, np.dtype[np.int64]]
+
+    def __len__(self) -> int:
+        return len(self.game_id)
+
+
 class Store:
     def __init__(self, database_url: str) -> None:
         self._engine = sa.create_engine(database_url)
@@ -132,24 +151,31 @@ class Store:
 
     # ---------------------------------------------------------------- upserts
 
+    # SQLite caps bound variables (~32k); chunk conservatively by row count so
+    # any table up to ~16 columns stays under the limit in one statement.
+    _UPSERT_CHUNK_ROWS = 1_000
+
     def _upsert(
         self, table: sa.Table, rows: Sequence[dict[str, Any]], *, update_cols: Sequence[str]
     ) -> int:
         if not rows:
             return 0
         dialect = self._engine.dialect.name
-        if dialect == "sqlite":
-            stmt = sqlite_insert(table).values(rows)
-        elif dialect == "postgresql":
-            stmt = pg_insert(table).values(rows)  # type: ignore[assignment]
-        else:
-            raise NotImplementedError(f"unsupported dialect {dialect!r}")
         pk = [c.name for c in table.primary_key.columns]
-        stmt = stmt.on_conflict_do_update(
-            index_elements=pk, set_={c: stmt.excluded[c] for c in update_cols}
-        )
         with self._engine.begin() as conn:
-            conn.execute(stmt)
+            for i in range(0, len(rows), self._UPSERT_CHUNK_ROWS):
+                chunk = rows[i : i + self._UPSERT_CHUNK_ROWS]
+                if dialect == "sqlite":
+                    stmt = sqlite_insert(table).values(chunk)
+                elif dialect == "postgresql":
+                    stmt = pg_insert(table).values(chunk)  # type: ignore[assignment]
+                else:
+                    raise NotImplementedError(f"unsupported dialect {dialect!r}")
+                conn.execute(
+                    stmt.on_conflict_do_update(
+                        index_elements=pk, set_={c: stmt.excluded[c] for c in update_cols}
+                    )
+                )
         return len(rows)
 
     def upsert_games(self, games: Iterable[Game]) -> int:
@@ -346,6 +372,52 @@ class Store:
                 table.name: conn.execute(sa.select(sa.func.count()).select_from(table)).scalar_one()
                 for table in (games_table, snapshots_table, markets_table, candles_table)
             }
+
+    def game_ids_with_snapshots(self) -> set[str]:
+        stmt = sa.select(snapshots_table.c.game_id).distinct()
+        with self._engine.connect() as conn:
+            return {row.game_id for row in conn.execute(stmt)}
+
+    def snapshot_columns(self) -> SnapshotColumns:
+        """All snapshots as parallel column arrays, streamed in chunks.
+
+        The training set is millions of rows; materializing pydantic models for
+        each would cost gigabytes. This is the one read path that trades the
+        typed-model boundary for arrays — the columns still come from the same
+        validated writes.
+        """
+        import numpy as np
+
+        stmt = sa.select(
+            snapshots_table.c.game_id,
+            snapshots_table.c.as_of,
+            snapshots_table.c.period,
+            snapshots_table.c.seconds_remaining_in_period,
+            snapshots_table.c.home_score,
+            snapshots_table.c.away_score,
+        ).order_by(snapshots_table.c.game_id, snapshots_table.c.as_of)
+        game_ids: list[str] = []
+        as_of: list[int] = []
+        period: list[int] = []
+        seconds: list[float] = []
+        home: list[int] = []
+        away: list[int] = []
+        with self._engine.connect() as conn:
+            for row in conn.execution_options(yield_per=50_000).execute(stmt):
+                game_ids.append(row.game_id)
+                as_of.append(row.as_of)
+                period.append(row.period)
+                seconds.append(row.seconds_remaining_in_period)
+                home.append(row.home_score)
+                away.append(row.away_score)
+        return SnapshotColumns(
+            game_id=game_ids,
+            as_of_epoch=np.array(as_of, dtype=np.int64),
+            period=np.array(period, dtype=np.int64),
+            seconds_remaining_in_period=np.array(seconds, dtype=np.float64),
+            home_score=np.array(home, dtype=np.int64),
+            away_score=np.array(away, dtype=np.int64),
+        )
 
     def candle_count_by_ticker(self) -> dict[str, int]:
         stmt = sa.select(candles_table.c.ticker, sa.func.count()).group_by(candles_table.c.ticker)

@@ -70,7 +70,7 @@ class FakeEspn:
         assert day is not None
         return self.by_date.get(day, [])
 
-    async def game_snapshots(self, game_id: str, *, final: bool = False) -> list[LiveGameState]:
+    async def game_snapshots(self, game_id: str, *, cache: bool = False) -> list[LiveGameState]:
         self.snapshot_requests.append(game_id)
         return self.snaps.get(game_id, [])
 

@@ -155,21 +155,29 @@ def parse_summary_snapshots(payload: dict[str, Any], *, game_id: str) -> list[Li
             home_score = int(play["homeScore"])
             away_score = int(play["awayScore"])
         except (KeyError, TypeError, ValueError) as exc:
+            # missing structure = drift we must hear about, not paper over
             raise SchemaDriftError(f"summary for {game_id}: bad play {play.get('id')}") from exc
+        try:
+            # content-level oddities ("End of Period" in the clock field, etc.)
+            # occur in a handful of historical games; drop the play, keep the game
+            seconds_remaining = parse_clock(clock_display)
+        except SchemaDriftError:
+            dropped += 1
+            continue
         play_id = play.get("id")
         snapshots.append(
             LiveGameState(
                 game_id=game_id,
                 as_of=_parse_espn_datetime(wallclock),
                 period=period,
-                seconds_remaining_in_period=parse_clock(clock_display),
+                seconds_remaining_in_period=seconds_remaining,
                 home_score=home_score,
                 away_score=away_score,
                 source_play_id=str(play_id) if play_id is not None else None,
             )
         )
     if dropped:
-        logger.info("dropped plays without wallclock", game_id=game_id, dropped=dropped)
+        logger.info("dropped unusable plays", game_id=game_id, dropped=dropped)
     return snapshots
 
 
@@ -192,12 +200,16 @@ class EspnClient:
         )
         return parse_scoreboard(payload)
 
-    async def game_snapshots(self, game_id: str, *, final: bool = False) -> list[LiveGameState]:
+    async def game_snapshots(self, game_id: str, *, cache: bool = False) -> list[LiveGameState]:
         """Historical (or in-progress) play-by-play snapshots for one game.
-        Pass ``final=True`` to cache — only a finished game's plays are immutable."""
+
+        ``cache=True`` is only valid for finished games (immutable payload) and
+        only worth it for small sets — summaries run ~1 MB each, so bulk
+        backfills should rely on the database as the persistent artifact
+        instead of mirroring gigabytes of JSON."""
         payload = await self._http.get_json(
             f"{self._base}/summary",
             params={"event": game_id},
-            cache_key=f"espn:summary:{game_id}" if final else None,
+            cache_key=f"espn:summary:{game_id}" if cache else None,
         )
         return parse_summary_snapshots(payload, game_id=game_id)
