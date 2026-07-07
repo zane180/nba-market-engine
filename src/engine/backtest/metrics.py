@@ -62,6 +62,18 @@ def expected_calibration_error(probs: FloatArray, labels: FloatArray, *, n_bins:
     return float(ece)
 
 
+def max_drawdown(equity: FloatArray) -> float:
+    """Largest peak-to-trough decline of an equity curve, as a fraction of the
+    peak. 0 means the curve never declined."""
+    equity = np.asarray(equity, dtype=np.float64)
+    if equity.size == 0:
+        raise ValueError("empty equity curve")
+    if np.any(equity <= 0):
+        raise ValueError("equity curve must stay positive")
+    peaks = np.maximum.accumulate(equity)
+    return float(np.max((peaks - equity) / peaks))
+
+
 class _Metric(Protocol):
     def __call__(self, probs: FloatArray, labels: FloatArray) -> float: ...
 

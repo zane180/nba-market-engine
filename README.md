@@ -47,9 +47,9 @@ default and multiply gated.
 - [x] Phase 0 — scaffold: tooling, CI, typed domain models, CLI skeleton
 - [x] Phase 1 — ingestion: ESPN + Kalshi clients, team-mapping layer
 - [x] Phase 2 — storage + historical backfill
-- [ ] Phase 3 — pre-game model (Elo → GBM) + calibration vs. market
-- [ ] Phase 4 — live in-game win-probability model
-- [ ] Phase 5 — walk-forward backtest engine (fees, sizing, leakage guards)
+- [x] Phase 3 — pre-game model (Elo → GBM) + calibration vs. market
+- [x] Phase 4 — live in-game win-probability model
+- [x] Phase 5 — walk-forward backtest engine (fees, sizing, leakage guards)
 - [ ] Phase 6 — live paper-trading loop
 - [ ] Phase 7 — case-study writeup, notebooks, polish
 

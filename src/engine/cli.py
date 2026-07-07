@@ -277,9 +277,30 @@ def report_live(
 
 
 @app.command()
-def backtest() -> None:
-    """Run the walk-forward backtest and regenerate reports/."""
-    _not_built("Phase 5 (backtest engine)")
+def backtest(
+    first_test_season: int = typer.Option(2026, help="first test season (end year)"),
+    bankroll: float = typer.Option(1000.0, help="initial bankroll in dollars"),
+) -> None:
+    """Walk-forward backtest with fees and sizing; writes reports/."""
+    from engine.backtest.report import run_backtest
+
+    settings = load_settings()
+    report = run_backtest(
+        _store(),
+        first_test_season=first_test_season,
+        initial_bankroll=bankroll,
+        seed=settings.random_seed,
+    )
+    for name, result in (
+        ("pregame        ", report.pregame),
+        ("pregame no-fee ", report.pregame_no_fees),
+        ("live           ", report.live),
+        ("follow-market  ", report.follow_market),
+    ):
+        typer.echo(
+            f"  {name} trades={len(result.trades):3d} pnl={result.total_pnl:+8.2f} "
+            f"roi={result.roi:+7.2%} fees={result.total_fees:7.2f} maxDD={result.max_drawdown:.2%}"
+        )
 
 
 @app.command()

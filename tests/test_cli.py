@@ -15,7 +15,7 @@ def test_help_lists_all_commands() -> None:
         assert command in result.output
 
 
-@pytest.mark.parametrize("command", ["backtest", "paper"])
+@pytest.mark.parametrize("command", ["paper"])
 def test_unbuilt_commands_say_so_and_fail(command: str) -> None:
     """Stubs must exit nonzero — a silent success would let CI/scripts pass on a
     pipeline stage that doesn't exist."""
