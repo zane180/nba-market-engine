@@ -223,6 +223,35 @@ def ingest_all(
     asyncio.run(run())
 
 
+report_app = typer.Typer(
+    name="report", help="Generate evaluation reports into reports/.", no_args_is_help=True
+)
+app.add_typer(report_app)
+
+
+@report_app.command("pregame")
+def report_pregame(
+    first_test_season: int = typer.Option(
+        2026, help="first season (end year) evaluated walk-forward"
+    ),
+) -> None:
+    """Pre-game models vs. the de-vigged market: metrics + reliability diagram."""
+    from pathlib import Path
+
+    from engine.models.evaluation import run_pregame_evaluation
+
+    settings = load_settings()
+    evaluation = run_pregame_evaluation(
+        _store(), first_test_season=first_test_season, seed=settings.random_seed
+    )
+    typer.echo(f"test seasons: {evaluation.test_seasons}")
+    for block in evaluation.full_test:
+        typer.echo(f"  [full]   {block.name}: brier={block.brier:.4f} n={block.n}")
+    for block in evaluation.market_subset:
+        typer.echo(f"  [market] {block.name}: brier={block.brier:.4f} n={block.n}")
+    typer.echo(f"reports written to {Path('reports').resolve()}")
+
+
 @app.command()
 def backtest() -> None:
     """Run the walk-forward backtest and regenerate reports/."""

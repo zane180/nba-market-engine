@@ -8,8 +8,11 @@ requires-python = ">=3.12"
 dependencies = [
     "cryptography>=44.0",
     "httpx>=0.28",
+    "matplotlib>=3.11.0",
+    "numpy>=2.5.1",
     "pydantic>=2.10",
     "pydantic-settings>=2.7",
+    "scikit-learn>=1.9.0",
     "sqlalchemy>=2.0.51",
     "structlog>=24.4",
     "typer>=0.15",
@@ -61,6 +64,10 @@ plugins = ["pydantic.mypy"]
 mypy_path = "src"
 files = ["src/engine", "tests"]
 warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = ["sklearn.*"]
+ignore_missing_imports = true
 
 [tool.pydantic-mypy]
 init_forbid_extra = true
