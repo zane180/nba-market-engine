@@ -72,7 +72,13 @@ class GbmModel:
         return self
 
     def predict_proba(self, rows: list[FeatureRow]) -> FloatArray:
-        raw = np.asarray(self._clf.predict_proba(feature_matrix(rows))[:, 1], dtype=np.float64)
+        return self.predict_proba_features([r.features for r in rows])
+
+    def predict_proba_features(self, features: list[dict[str, float]]) -> FloatArray:
+        """Predict from raw feature dicts — the live path, where a game has no
+        label yet and therefore no FeatureRow."""
+        x = np.array([[f[name] for name in FEATURE_NAMES] for f in features])
+        raw = np.asarray(self._clf.predict_proba(x)[:, 1], dtype=np.float64)
         if self._calibrator is not None:
             return self._calibrator.transform(raw)
         return raw

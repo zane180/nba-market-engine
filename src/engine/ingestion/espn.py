@@ -132,6 +132,43 @@ def parse_scoreboard(payload: dict[str, Any]) -> list[Game]:
     return games
 
 
+def parse_scoreboard_live_states(
+    payload: dict[str, Any], *, as_of: datetime
+) -> list[LiveGameState]:
+    """In-game states for every IN_PROGRESS game on a scoreboard payload.
+
+    The scoreboard's ``status`` block carries ``period`` and ``clock`` (seconds
+    remaining in the period, float). ``as_of`` is the fetch time — the
+    scoreboard has no per-event wallclock.
+    """
+    if as_of.tzinfo is None:
+        raise ValueError("as_of must be timezone-aware")
+    states: list[LiveGameState] = []
+    for event in payload.get("events", []):
+        status_type = event.get("status", {}).get("type", {})
+        if _parse_status(status_type, context=f"event {event.get('id')}") is not (
+            GameStatus.IN_PROGRESS
+        ):
+            continue
+        game_id = str(event["id"])
+        status = event["status"]
+        competition = event["competitions"][0]
+        scores: dict[str, int] = {}
+        for competitor in competition["competitors"]:
+            scores[competitor["homeAway"]] = int(competitor.get("score") or 0)
+        states.append(
+            LiveGameState(
+                game_id=game_id,
+                as_of=as_of,
+                period=int(status["period"]),
+                seconds_remaining_in_period=float(status["clock"]),
+                home_score=scores["home"],
+                away_score=scores["away"],
+            )
+        )
+    return states
+
+
 def parse_summary_snapshots(payload: dict[str, Any], *, game_id: str) -> list[LiveGameState]:
     """Play-by-play -> in-game snapshots, one per play that carries a wallclock.
 
@@ -199,6 +236,15 @@ class EspnClient:
             f"{self._base}/scoreboard", params=params, cache_key=cache_key
         )
         return parse_scoreboard(payload)
+
+    async def scoreboard_snapshot(self) -> tuple[list[Game], list[LiveGameState]]:
+        """Today's games plus in-game states for those in progress — one fetch,
+        never cached (it's live state)."""
+        payload = await self._http.get_json(f"{self._base}/scoreboard")
+        return (
+            parse_scoreboard(payload),
+            parse_scoreboard_live_states(payload, as_of=datetime.now(UTC)),
+        )
 
     async def game_snapshots(self, game_id: str, *, cache: bool = False) -> list[LiveGameState]:
         """Historical (or in-progress) play-by-play snapshots for one game.

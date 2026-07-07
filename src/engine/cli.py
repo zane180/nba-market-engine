@@ -1,6 +1,6 @@
-"""Typer CLI entrypoints. Each command maps to one pipeline stage; commands whose
-phase isn't built yet exit with code 2 and say so, rather than pretending.
-"""
+"""Typer CLI entrypoints. Each command maps to one pipeline stage:
+ingest (backfill + verify), report (calibration evaluations), backtest,
+paper (the live loop), and config."""
 
 from __future__ import annotations
 
@@ -26,13 +26,6 @@ app = typer.Typer(
     no_args_is_help=True,
     pretty_exceptions_show_locals=False,
 )
-
-_NOT_BUILT = 2
-
-
-def _not_built(phase: str) -> None:
-    typer.echo(f"not implemented yet — arrives in {phase}", err=True)
-    raise typer.Exit(_NOT_BUILT)
 
 
 @app.callback()
@@ -304,9 +297,35 @@ def backtest(
 
 
 @app.command()
-def paper() -> None:
-    """Run the live paper-trading loop (the default and only execution path)."""
-    _not_built("Phase 6 (paper trading)")
+def paper(
+    interval: float = typer.Option(60.0, help="seconds between ticks"),
+    once: bool = typer.Option(False, "--once", help="run a single tick and exit"),
+    bankroll: float = typer.Option(1000.0, help="paper bankroll (dollars)"),
+) -> None:
+    """Live paper-trading loop: ingest -> model -> edge -> logged would-be trades.
+
+    The default and only enabled execution path. Records order-book snapshots
+    on every tick; a tick with no NBA games is a healthy no-op.
+    """
+    import asyncio
+
+    from engine.backtest.engine import StrategyParams
+    from engine.execution.paper import PaperTrader
+    from engine.pipeline.live_loop import LiveLoop, ModelBundle
+
+    async def run() -> None:
+        async with _clients() as (store, espn, kalshi):
+            models = ModelBundle.fit_from_store(store)
+            trader = PaperTrader(store, initial_bankroll=bankroll, params=StrategyParams())
+            loop = LiveLoop(espn=espn, kalshi=kalshi, store=store, trader=trader, models=models)
+            await loop.run(interval_seconds=interval, max_ticks=1 if once else None)
+            typer.echo(
+                f"paper bankroll: ${trader.bankroll:,.2f} "
+                f"({len(store.paper_trades())} lifetime trades, "
+                f"{len(store.paper_trades(open_only=True))} open)"
+            )
+
+    asyncio.run(run())
 
 
 @app.command()

@@ -50,7 +50,7 @@ default and multiply gated.
 - [x] Phase 3 — pre-game model (Elo → GBM) + calibration vs. market
 - [x] Phase 4 — live in-game win-probability model
 - [x] Phase 5 — walk-forward backtest engine (fees, sizing, leakage guards)
-- [ ] Phase 6 — live paper-trading loop
+- [x] Phase 6 — live paper-trading loop
 - [ ] Phase 7 — case-study writeup, notebooks, polish
 
 ## License

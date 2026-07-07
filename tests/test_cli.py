@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from typer.testing import CliRunner
 
-from engine.cli import _NOT_BUILT, app
+from engine.cli import app
 
 runner = CliRunner()
 
@@ -11,17 +11,8 @@ runner = CliRunner()
 def test_help_lists_all_commands() -> None:
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
-    for command in ("ingest", "backtest", "paper", "config"):
+    for command in ("ingest", "backtest", "paper", "report", "config"):
         assert command in result.output
-
-
-@pytest.mark.parametrize("command", ["paper"])
-def test_unbuilt_commands_say_so_and_fail(command: str) -> None:
-    """Stubs must exit nonzero — a silent success would let CI/scripts pass on a
-    pipeline stage that doesn't exist."""
-    result = runner.invoke(app, [command])
-    assert result.exit_code == _NOT_BUILT
-    assert "not implemented" in result.output
 
 
 def test_ingest_group_lists_subcommands() -> None:

@@ -91,12 +91,38 @@ def _rest_days(state: _TeamState, tipoff: datetime) -> float:
     return min(REST_CAP_DAYS, (tipoff - state.last_game).total_seconds() / 86_400.0)
 
 
-def build_feature_rows(games: list[Game]) -> list[FeatureRow]:
-    """Feature rows for every FINAL, decidable game, in chronological order.
+def _regress_for_new_season(states: dict[str, _TeamState]) -> None:
+    for state in states.values():  # new season: regress toward mean
+        state.elo = SEASON_CARRYOVER * state.elo + (1 - SEASON_CARRYOVER) * ELO_MEAN
+        state.recent.clear()
+        state.last_game = None
+        state.games_played = 0
 
-    Input may be any order/status; non-final games are skipped (they carry no
-    label and must not touch Elo state either).
-    """
+
+def _feature_block(home: _TeamState, away: _TeamState, game: Game) -> dict[str, float]:
+    """The feature dict for one game given the CURRENT (pre-result) states —
+    single source of truth for historical rows and upcoming-game prediction."""
+    rest_home = _rest_days(home, game.start_time)
+    rest_away = _rest_days(away, game.start_time)
+    return {
+        "elo_diff": home.elo - away.elo,
+        "elo_home_prob": elo_expected_home(home.elo, away.elo),
+        "rest_days_home": rest_home,
+        "rest_days_away": rest_away,
+        "back_to_back_home": float(rest_home <= 1.25),
+        "back_to_back_away": float(rest_away <= 1.25),
+        "form_home": sum(home.recent) / len(home.recent) if home.recent else 0.5,
+        "form_away": sum(away.recent) / len(away.recent) if away.recent else 0.5,
+        "games_played_home": float(home.games_played),
+        "games_played_away": float(away.games_played),
+        "is_playoffs": float(game.season_type == 3),
+    }
+
+
+def _replay(
+    games: list[Game],
+) -> tuple[list[FeatureRow], dict[str, _TeamState], int | None]:
+    """Chronological replay of final games: (rows, end states, last season)."""
     finals = sorted(
         (g for g in games if g.status is GameStatus.FINAL and g.home_score != g.away_score),
         key=lambda g: (g.start_time, g.game_id),
@@ -108,32 +134,14 @@ def build_feature_rows(games: list[Game]) -> list[FeatureRow]:
     for game in finals:
         season = season_of(game.start_time)
         if current_season is not None and season != current_season:
-            for state in states.values():  # new season: regress toward mean
-                state.elo = SEASON_CARRYOVER * state.elo + (1 - SEASON_CARRYOVER) * ELO_MEAN
-                state.recent.clear()
-                state.last_game = None
-                state.games_played = 0
+            _regress_for_new_season(states)
         current_season = season
 
         home = states.setdefault(game.home_team, _TeamState())
         away = states.setdefault(game.away_team, _TeamState())
 
         # ---- emit features BEFORE this game's result updates any state ----
-        rest_home = _rest_days(home, game.start_time)
-        rest_away = _rest_days(away, game.start_time)
-        features = {
-            "elo_diff": home.elo - away.elo,
-            "elo_home_prob": elo_expected_home(home.elo, away.elo),
-            "rest_days_home": rest_home,
-            "rest_days_away": rest_away,
-            "back_to_back_home": float(rest_home <= 1.25),
-            "back_to_back_away": float(rest_away <= 1.25),
-            "form_home": sum(home.recent) / len(home.recent) if home.recent else 0.5,
-            "form_away": sum(away.recent) / len(away.recent) if away.recent else 0.5,
-            "games_played_home": float(home.games_played),
-            "games_played_away": float(away.games_played),
-            "is_playoffs": float(game.season_type == 3),
-        }
+        features = _feature_block(home, away, game)
         rows.append(
             FeatureRow(
                 game_id=game.game_id,
@@ -163,4 +171,30 @@ def build_feature_rows(games: list[Game]) -> list[FeatureRow]:
             state.last_game = game.start_time
             state.games_played += 1
 
+    return rows, states, current_season
+
+
+def build_feature_rows(games: list[Game]) -> list[FeatureRow]:
+    """Feature rows for every FINAL, decidable game, in chronological order.
+
+    Input may be any order/status; non-final games are skipped (they carry no
+    label and must not touch Elo state either).
+    """
+    rows, _, _ = _replay(games)
     return rows
+
+
+def features_for_upcoming(history: list[Game], upcoming: Game) -> dict[str, float]:
+    """Pre-game features for a not-yet-played game, from history alone.
+
+    Uses the exact same replay + feature block as training rows, so the live
+    path cannot drift from what the model was trained on. History games at or
+    after the upcoming tipoff are ignored (belt and braces against lookahead).
+    """
+    usable = [g for g in history if g.start_time < upcoming.start_time]
+    _, states, last_season = _replay(usable)
+    if last_season is not None and season_of(upcoming.start_time) != last_season:
+        _regress_for_new_season(states)
+    home = states.setdefault(upcoming.home_team, _TeamState())
+    away = states.setdefault(upcoming.away_team, _TeamState())
+    return _feature_block(home, away, upcoming)

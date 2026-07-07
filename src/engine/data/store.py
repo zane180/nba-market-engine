@@ -17,7 +17,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 import sqlalchemy as sa
 
@@ -83,6 +83,36 @@ candles_table = sa.Table(
     sa.Column("open_interest", sa.Float, nullable=False),
 )
 
+paper_trades_table = sa.Table(
+    "paper_trades",
+    metadata,
+    sa.Column("trade_id", sa.String, primary_key=True),  # deterministic: ticker + entry epoch
+    sa.Column("ticker", sa.String, nullable=False, index=True),
+    sa.Column("game_id", sa.String, nullable=False, index=True),
+    sa.Column("yes_team", sa.String, nullable=False),
+    sa.Column("entered_at", sa.BigInteger, nullable=False),
+    sa.Column("side", sa.String, nullable=False),
+    sa.Column("contracts", sa.Float, nullable=False),
+    sa.Column("price_cents", sa.Integer, nullable=False),
+    sa.Column("fee", sa.Float, nullable=False),
+    sa.Column("cost", sa.Float, nullable=False),
+    sa.Column("model_prob", sa.Float, nullable=False),
+    sa.Column("market_prob", sa.Float, nullable=False),
+    sa.Column("settled_at", sa.BigInteger, nullable=True),
+    sa.Column("payout", sa.Float, nullable=True),
+)
+
+book_snapshots_table = sa.Table(
+    "book_snapshots",
+    metadata,
+    sa.Column("ticker", sa.String, primary_key=True),
+    sa.Column("as_of", sa.BigInteger, primary_key=True),
+    sa.Column("side", sa.String, primary_key=True),
+    sa.Column("level", sa.Integer, primary_key=True),  # 0 = best
+    sa.Column("price_cents", sa.Integer, nullable=False),
+    sa.Column("quantity", sa.Float, nullable=False),
+)
+
 schema_version_table = sa.Table(
     "schema_version",
     metadata,
@@ -103,6 +133,44 @@ def _utc(epoch: int) -> datetime:
 
 class SchemaVersionError(RuntimeError):
     pass
+
+
+@dataclass(frozen=True)
+class PaperTradeRecord:
+    """One would-be trade from the paper loop, persisted for later evaluation."""
+
+    trade_id: str
+    ticker: str
+    game_id: str
+    yes_team: str
+    entered_at: datetime
+    side: str  # "yes" | "no"
+    contracts: float
+    price_cents: int
+    fee: float
+    cost: float
+    model_prob: float  # P(YES) at entry
+    market_prob: float  # de-vigged market P(YES) at entry
+    settled_at: datetime | None = None
+    payout: float | None = None
+
+    @property
+    def is_open(self) -> bool:
+        return self.settled_at is None
+
+
+class OrderBookLike(Protocol):
+    """Structural view of engine.data.models.OrderBook (avoids a hard import
+    cycle risk and keeps the store decoupled from parser types)."""
+
+    @property
+    def ticker(self) -> str: ...
+    @property
+    def as_of(self) -> datetime: ...
+    @property
+    def yes_bids(self) -> Sequence[Any]: ...
+    @property
+    def no_bids(self) -> Sequence[Any]: ...
 
 
 @dataclass(frozen=True)
@@ -372,6 +440,98 @@ class Store:
                 table.name: conn.execute(sa.select(sa.func.count()).select_from(table)).scalar_one()
                 for table in (games_table, snapshots_table, markets_table, candles_table)
             }
+
+    # ------------------------------------------------------- paper trading
+
+    def insert_paper_trade(self, trade: PaperTradeRecord) -> None:
+        self._upsert(
+            paper_trades_table,
+            [
+                {
+                    "trade_id": trade.trade_id,
+                    "ticker": trade.ticker,
+                    "game_id": trade.game_id,
+                    "yes_team": trade.yes_team,
+                    "entered_at": _epoch(trade.entered_at),
+                    "side": trade.side,
+                    "contracts": trade.contracts,
+                    "price_cents": trade.price_cents,
+                    "fee": trade.fee,
+                    "cost": trade.cost,
+                    "model_prob": trade.model_prob,
+                    "market_prob": trade.market_prob,
+                    "settled_at": _epoch(trade.settled_at) if trade.settled_at else None,
+                    "payout": trade.payout,
+                }
+            ],
+            update_cols=["settled_at", "payout"],
+        )
+
+    def settle_paper_trade(self, trade_id: str, *, settled_at: datetime, payout: float) -> None:
+        stmt = (
+            paper_trades_table.update()
+            .where(paper_trades_table.c.trade_id == trade_id)
+            .values(settled_at=_epoch(settled_at), payout=payout)
+        )
+        with self._engine.begin() as conn:
+            conn.execute(stmt)
+
+    def paper_trades(self, *, open_only: bool = False) -> list[PaperTradeRecord]:
+        stmt = sa.select(paper_trades_table).order_by(paper_trades_table.c.entered_at)
+        if open_only:
+            stmt = stmt.where(paper_trades_table.c.settled_at.is_(None))
+        with self._engine.connect() as conn:
+            return [
+                PaperTradeRecord(
+                    trade_id=row.trade_id,
+                    ticker=row.ticker,
+                    game_id=row.game_id,
+                    yes_team=row.yes_team,
+                    entered_at=_utc(row.entered_at),
+                    side=row.side,
+                    contracts=row.contracts,
+                    price_cents=row.price_cents,
+                    fee=row.fee,
+                    cost=row.cost,
+                    model_prob=row.model_prob,
+                    market_prob=row.market_prob,
+                    settled_at=_utc(row.settled_at) if row.settled_at is not None else None,
+                    payout=row.payout,
+                )
+                for row in conn.execute(stmt)
+            ]
+
+    def paper_bankroll(self, initial: float) -> float:
+        """Cash bankroll: initial - all costs + settled payouts. Open positions
+        are not marked to market (consistent with the backtest's at-cost view)."""
+        trades = self.paper_trades()
+        return (
+            initial
+            - sum(t.cost for t in trades)
+            + sum(t.payout for t in trades if t.payout is not None)
+        )
+
+    def insert_book_snapshot(self, book: OrderBookLike) -> int:
+        rows = []
+        for side, levels in (("yes", book.yes_bids), ("no", book.no_bids)):
+            for level, entry in enumerate(levels):
+                rows.append(
+                    {
+                        "ticker": book.ticker,
+                        "as_of": _epoch(book.as_of),
+                        "side": side,
+                        "level": level,
+                        "price_cents": entry.price,
+                        "quantity": entry.quantity,
+                    }
+                )
+        return self._upsert(book_snapshots_table, rows, update_cols=["price_cents", "quantity"])
+
+    def book_snapshot_count(self) -> int:
+        with self._engine.connect() as conn:
+            return conn.execute(
+                sa.select(sa.func.count()).select_from(book_snapshots_table)
+            ).scalar_one()
 
     def game_ids_with_snapshots(self) -> set[str]:
         stmt = sa.select(snapshots_table.c.game_id).distinct()
